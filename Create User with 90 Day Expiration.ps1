@@ -1,9 +1,9 @@
 ﻿<#
-This script locates the 'New Users.xlsx' file on your non-admin account Desktop. Since PowerShell is ran as an administrator to work in AD,
+This script locates the 'New Users (Consultants).xlsx' file on your non-admin account Desktop. Since PowerShell is ran as an administrator to work in AD,
 your current username will include the '-admin' suffix. This script parses the current username for everything before the '-', and if a '-'
-doesn't exist, it takes the full username. The 'New Users.xlsx' file must have first name in the first column, last name in the second column,
-and password in the third column. It takes the data from the Excel file, parses it appropriately, and creates the AD user object. If the user
-already exists in AD, it will display a warning and skip to the next user in the list. Skipped users will need to be created manually.
+doesn't exist, it takes the full username. The 'New Users (Consultants).xlsx' file must have first name in the first column, last name in the second column,
+and password in the third column. It takes the data from the Excel file, parses it appropriately, and creates the AD user object with a 90 day expiration.
+If the user already exists in AD, it will display a warning and skip to the next user in the list. Skipped users will need to be created manually.
 
 Edit lines 31, 40, and 67 appropriately before running the script.
 #>
@@ -11,10 +11,10 @@ Edit lines 31, 40, and 67 appropriately before running the script.
 # Set non-admin username to find appropriate Desktop where 'New Users.xlsx' is stored
 $username = if ($env:USERNAME.IndexOf('-') -eq -1) { $env:USERNAME } else { $env:USERNAME.Substring(0,$env:USERNAME.IndexOf('-')) }
 
-# Create new Excel object and opens the 'New Users.xlsx' workbook and first worksheet
+# Create new Excel object and opens the 'New Users (Consultants).xlsx' workbook and first worksheet
 $excel = New-Object -ComObject Excel.Application
 $excel.Visible = $false
-$workBook = $excel.Workbooks.Open('C:\users\' + $username + '\desktop\New Users.xlsx')
+$workBook = $excel.Workbooks.Open('C:\users\' + $username + '\desktop\New Users (Consultants).xlsx')
 $workSheet = $workBook.Sheets.Item(1)
 
 # Find the number of records in the worksheet
@@ -65,6 +65,7 @@ For ($i = 1; $i -le $rowCount; $i++) {
         Write-Warning "The user $samAccountName already exists."
         $samAccountName = Read-Host -Prompt "What username should be given instead for user '$name'? (leave blank to skip this user)"
         $userPrincipalName = $samAccountName + '' # Enter the suffix for the principal name (e.g. @domain.com)
+
     }
 
     If ($samAccountName) {
@@ -85,9 +86,12 @@ For ($i = 1; $i -le $rowCount; $i++) {
             -AccountPassword (ConvertTo-SecureString $password -AsPlainText -Force) `
             -Enabled $true `
             -ChangePasswordAtLogon $false
+
+        Set-ADAccountExpiration -Identity $samAccountName -TimeSpan (New-TimeSpan -Days 90)
+
         Write-Host "User $samAccountName has been created in $path."
     } Else {
-
+        
         Write-Host "Skipping user '$name'."
     }
 }
