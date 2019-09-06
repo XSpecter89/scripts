@@ -1,2 +1,0 @@
-﻿# Queries AD users for expired user accounts
-get-aduser -Filter * | where-object {($_.accountexpirationdate -ne $null) -and ($_.accountexpirationdate -le [DateTime]::Now) -and ($_.enabled -eq 'true')} | FT Name,DistinguishedName

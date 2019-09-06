@@ -1,12 +1,31 @@
-﻿# Allow PowerShell to run Exchange Management Shell commands by connecting to the Exchange server
-$UserCredential = Get-Credential
-Enter-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri '' -Authentication Kerberos -Credential $UserCredential # Enter the connection URI for Powershell on the Exchange server (e.g. https://mail.domain.com/powershell)
+﻿# Collection of scripts for managing an Exchange server remotely through Powershell. Lines 4, 7, 10, and 31 must stay uncommented. Uncomment the Invoke-Command lines you want to run, as needed.
 
-# Create a mailbox for a specific user in the specified database
-Enable-Mailbox -Identity '' -Alias '' -Database '' # Enter full DN (e.g. Domain.com/Users/John Doe) of the user object, the username/alias, and the database in which the mailbox should be created
+# Connection URI to your Exchange server PowerShell (e.g. http://server.domain.com/Powershell/)
+$uri = ''
 
-# Move a specific user's mailbox to a new database
-'' | New-MoveRequest -TargetDatabase '' # Enter full DN (e.g. Domain.com/Users/John Doe) of the user object and the destination database to which the mailbox should be moved
+# Get admin credential to Exchange server
+$cred = Get-Credential
 
-# Query all databases and display the number of mailboxes in each
-Get-Mailbox | Group-Object -Property:Database | Select-Object Name,Count | Sort-Object Name | FT -Auto
+# Create the Exchange shell session
+$session = New-PSSession -ConfigurationName Microsoft.Exchange -ConnectionUri $uri -Authentication Kerberos -Credential $cred
+
+# Test command that should just return the name of the Exchange server, confirming you're connected to Exchange Management Shell
+#Invoke-Command -Session $session { Get-ExchangeServer | Select-Object Name }
+
+# Create new mail for specified user
+#Invoke-Command -Session $session { Enable-Mailbox -Identity '' -Alias '' -Database '' }
+
+# Modify primary SMTP record of mailbox
+#Invoke-Command -Session $session { Set-Mailbox '' -EmailAddressPolicyEnabled $false -EmailAddresses '' }
+
+# Mailbox move
+#Invoke-Command -Session $session { '' | New-MoveRequest -TargetDatabase '' }
+
+# Mailbox database populations
+#Invoke-Command -Session $session { Get-Mailbox -WarningAction silentlycontinue } | Group-Object -Property Database | Select-Object Name,Count | Sort-Object Name | FT -Auto
+
+# Enter a custom Exchange shell command between the braces { }
+#Invoke-Command -Session $session {  }
+
+#Clear Powershell sessions
+Get-PSSession | Remove-PSSession

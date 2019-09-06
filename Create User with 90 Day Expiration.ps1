@@ -5,7 +5,7 @@ doesn't exist, it takes the full username. The 'New Users (Consultants).xlsx' fi
 and password in the third column. It takes the data from the Excel file, parses it appropriately, and creates the AD user object with a 90 day expiration.
 If the user already exists in AD, it will display a warning and skip to the next user in the list. Skipped users will need to be created manually.
 
-Edit lines 31, 40, and 67 appropriately before running the script.
+Edit lines 31, 40, 67, and 80 appropriately before running the script.
 #>
 
 # Set non-admin username to find appropriate Desktop where 'New Users.xlsx' is stored
@@ -70,14 +70,14 @@ For ($i = 1; $i -le $rowCount; $i++) {
 
     If ($samAccountName) {
 
-        # Fill in StreetAddress, City, State, and PostalCode as needed
+        # Fill in StreetAddress, City, State, and PostalCode as needed. Modify User Principal Name's domain.
         New-ADUser `
             -Name $name `
             -DisplayName $name `
             -GivenName $givenName `
             -Surname $surname `
             -SamAccountName $samAccountName `
-            -UserPrincipalName $userPrincipalName `
+            -UserPrincipalName $userPrincipalName + '@example.com' `
             -StreetAddress '' `
             -City '' `
             -State '' `
